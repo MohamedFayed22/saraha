@@ -1,11 +1,15 @@
+import dotenv from "dotenv";
+import { resolve } from "node:path";
+dotenv.config({ path: resolve("config/.env") });
 import express from "express";
 import checkConnection from "./DB/connectionDB.js";
 import userRouter from "./modules/users/user.controller.js";
-
+import cors from "cors";
 const app = express();
-const port = 3000;
+const port = process.env.PORT;
 
 const bootstrap = () => {
+  app.use(cors({ origin: "*" }));
   app.use(express.json());
 
   checkConnection();
@@ -26,8 +30,6 @@ const bootstrap = () => {
       stack: err.stack,
     });
   });
-
-
 
   app.listen(port, () => {
     console.log(`Server is running on port ${port}`);

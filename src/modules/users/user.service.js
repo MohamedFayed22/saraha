@@ -2,11 +2,10 @@ import userModel from "../../DB/models/user.model.js";
 import { providerEnum } from "../../common/enum/user.enum.js";
 import * as db_service from "../../DB/db.service.js";
 import { successResponse } from "../../common/utils/response.success.js";
-import {
-  decrypt,
-  encrypt,
-} from "../../common/utils/security/encrypt.securty.js";
-import bcrypt from "bcrypt";
+import { encrypt } from "../../common/utils/security/encrypt.securty.js";
+import { v4 as uuidv4 } from "uuid";
+import { generateToken } from "../../common/utils/token.service.js";
+import { Compare, Hash } from "../../common/utils/security/hash.security.js";
 
 export const signUp = async (req, res, next) => {
   const { userName, lastName, email, password, cpassword, gender, age, phone } =
@@ -28,13 +27,11 @@ export const signUp = async (req, res, next) => {
     throw new Error("Email already exist", { cause: 400 });
   }
 
-  await sendOTP(req, res, next);
-
-  if (sendOTP !== "123456") throw new Error("OTP not sent", { cause: 400 })
-
-
   const encryptPhone = encrypt(phone);
-  const bcryptPassword = bcrypt.hashSync(password, 13);
+  const bcryptPassword = Hash({
+    password,
+    salt_rounds: process.env.SALT_ROUNDS,
+  });
 
   const user = await db_service.create({
     model: userModel,
@@ -56,18 +53,6 @@ export const signUp = async (req, res, next) => {
   });
 };
 
-
-const sendOTP = async (req, res, next) => {
-  const otp = "123456"; // Math.floor(1000 + Math.random() * 9000);
-  const { phone } = req.body;
-
-  // TODO : logic to send otp
-
-  return otp;
-}
-
-
-
 export const signIn = async (req, res, next) => {
   const { email, password } = req.body;
 
@@ -80,36 +65,29 @@ export const signIn = async (req, res, next) => {
     select: "-password",
   });
 
-  if (!user || !bcrypt.compareSync(password, user.password)) {
+  if (!user || !Compare(password, user.password)) {
     throw new Error("Invalid credentials", { cause: 401 });
   }
+
+  const access_token = generateToken({
+    payload: { id: user._id, email: user.email },
+    secret_key: "mohamed",
+    options: { jwtid: uuidv4() },
+  });
 
   successResponse({
     res,
     status: 201,
     message: "User signIn successfully",
-    data: user,
+    data: access_token,
   });
 };
 
 export const getProfile = async (req, res, next) => {
-  const { id } = req.params;
-  const user = await db_service.findOne({
-    model: userModel,
-    filter: { _id: id },
-  });
-
-  if (!user) {
-    throw new Error("User already exist", { cause: 400 });
-  }
-
   successResponse({
     res,
     status: 200,
     message: "User profile fetched successfully",
-    data: {
-      ...user._doc,
-      phone: decrypt(user.phone),
-    },
+    data: req.user,
   });
 };
