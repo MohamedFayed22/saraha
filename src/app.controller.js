@@ -2,7 +2,7 @@ import express from "express";
 import checkConnection from "./DB/connectionDB.js";
 import userRouter from "./modules/users/user.controller.js";
 import cors from "cors";
-import {port_config} from "../config/config.service.js";
+import { port_config } from "../config/config.service.js";
 const app = express();
 const port = port_config;
 
@@ -26,6 +26,7 @@ const bootstrap = () => {
     res.status(err.cause || 500).json({
       message: err.message,
       stack: err.stack,
+      error: err,
     });
   });
 

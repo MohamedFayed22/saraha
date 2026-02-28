@@ -6,11 +6,33 @@ import { encrypt } from "../../common/utils/security/encrypt.securty.js";
 import { v4 as uuidv4 } from "uuid";
 import { generateToken } from "../../common/utils/token.service.js";
 import { Compare, Hash } from "../../common/utils/security/hash.security.js";
-import {salt_rounds_config, secret_key_config} from "../../../config/config.service.js";
+import {
+  salt_rounds_config,
+  secret_key_config,
+} from "../../../config/config.service.js";
+import joi from "joi";
+
+export  const singUpSchema = joi
+    .object({
+      userName: joi.string().min(3).max(30),
+      email: joi.string().email(),
+      password: joi.string().min(6).max(20),
+    })
+    .required();
 
 export const signUp = async (req, res, next) => {
   const { userName, lastName, email, password, cpassword, gender, age, phone } =
     req.body;
+
+
+
+  const { error } = singUpSchema.validate(req.body, {
+    abortEarly: false,
+  });
+  if (error) {
+    return res.status(401).json({ message: "validate error", error: error });
+  }
+
   if (userName.split(" ").length < 2) {
     throw new Error("Invalid name", { cause: 400 });
   }
