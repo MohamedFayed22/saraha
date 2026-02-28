@@ -1,6 +1,7 @@
 import { verifyToken } from "../utils/token.service.js";
 import userModel from "../../DB/models/user.model.js";
 import * as db_service from "../../DB/db.service.js";
+import {secret_key_config} from "../../../config/config.service.js";
 
 export const authentication = async (req, res, next) => {
   const { authorization } = req.headers;
@@ -17,7 +18,7 @@ export const authentication = async (req, res, next) => {
 
   const decoded = verifyToken({
     token: token,
-    secret_key: "mohamed",
+    secret_key: secret_key_config,
   });
 
   if (!decoded || !decoded.id) {

@@ -1,12 +1,10 @@
-import dotenv from "dotenv";
-import { resolve } from "node:path";
-dotenv.config({ path: resolve("config/.env") });
 import express from "express";
 import checkConnection from "./DB/connectionDB.js";
 import userRouter from "./modules/users/user.controller.js";
 import cors from "cors";
+import {port_config} from "../config/config.service.js";
 const app = express();
-const port = process.env.PORT;
+const port = port_config;
 
 const bootstrap = () => {
   app.use(cors({ origin: "*" }));
