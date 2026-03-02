@@ -6,7 +6,12 @@ import { roleEnum } from "../../common/enum/user.enum.js";
 import {validate} from "../../common/middleware/validation.js";
 const userRouter = Router();
 
-userRouter.post("/signup",validate, US.signUp);
+userRouter.post("/signup",vmulter_local({
+  custem_types:[...multerEnum.image,...multerEnum.pdf]
+}).fields([
+  {name:"attachment",maxCount:1},
+  {name:"attachments",maxCount:5}
+]),validate, US.signUp);
 userRouter.post("/signin", US.signIn);
 userRouter.get(
   "/profile/:id",

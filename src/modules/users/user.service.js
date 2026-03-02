@@ -56,6 +56,15 @@ export const signUp = async (req, res, next) => {
     salt_rounds: salt_rounds_config,
   });
 
+
+  const file_path = [];
+
+  if (req.files) {
+    for (const file of req.files) {
+      file_path.push(file.path);
+    }
+  }
+
   const user = await db_service.create({
     model: userModel,
     data: {
@@ -66,6 +75,8 @@ export const signUp = async (req, res, next) => {
       phone: encryptPhone,
       gender,
       age,
+      profileImage: req.files.attachments[0].path ,
+      attachments: file_path,
     },
   });
   successResponse({
