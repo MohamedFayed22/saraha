@@ -3,11 +3,22 @@ import * as US from "./user.service.js";
 import { authentication } from "../../common/middleware/authentication.js";
 import { authorization } from "../../common/middleware/authorization.js";
 import { roleEnum } from "../../common/enum/user.enum.js";
-import {validate} from "../../common/middleware/validation.js";
-import {multer_local} from "../../common/middleware/multer.js";
+import { validate } from "../../common/middleware/validation.js";
+import { multer_local } from "../../common/middleware/multer.js";
+import { multerEnum } from "../../common/enum/multer.enum.js";
 const userRouter = Router();
 
-userRouter.post("/signup",multer_local().single("attachment"),validate, US.signUp);
+userRouter.post(
+  "/signup",
+  multer_local({
+    custom_types: [...multerEnum.image, ...multerEnum.pdf],
+  }).fields([
+    { name: "attachment", maxCount: 1 },
+    { name: "attachments", maxCount: 5 },
+  ]),
+  validate,
+  US.signUp,
+);
 userRouter.post("/signin", US.signIn);
 userRouter.get(
   "/profile/:id",

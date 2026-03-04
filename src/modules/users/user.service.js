@@ -12,19 +12,17 @@ import {
 } from "../../../config/config.service.js";
 import joi from "joi";
 
-export  const singUpSchema = joi
-    .object({
-      userName: joi.string().min(3).max(30),
-      email: joi.string().email(),
-      password: joi.string().min(6).max(20),
-    })
-    .required();
+export const singUpSchema = joi
+  .object({
+    userName: joi.string().min(3).max(30),
+    email: joi.string().email(),
+    password: joi.string().min(6).max(20),
+  })
+  .required();
 
 export const signUp = async (req, res, next) => {
   const { userName, lastName, email, password, cpassword, gender, age, phone } =
     req.body;
-
-
 
   const { error } = singUpSchema.validate(req.body, {
     abortEarly: false,
@@ -56,6 +54,14 @@ export const signUp = async (req, res, next) => {
     salt_rounds: salt_rounds_config,
   });
 
+  const file_path = [];
+
+  if (req.files) {
+    for (const file of req.files) {
+      file_path.push(file.path);
+    }
+  }
+
   const user = await db_service.create({
     model: userModel,
     data: {
@@ -66,6 +72,8 @@ export const signUp = async (req, res, next) => {
       phone: encryptPhone,
       gender,
       age,
+      profileImage: req.files.attachments[0].path,
+      attachments: file_path,
     },
   });
   successResponse({
