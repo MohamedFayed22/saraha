@@ -57,7 +57,7 @@ export const signUp = async (req, res, next) => {
   const file_path = [];
 
   if (req.files) {
-    for (const file of req.files) {
+    for (const file of req.files.attachments) {
       file_path.push(file.path);
     }
   }
@@ -72,7 +72,7 @@ export const signUp = async (req, res, next) => {
       phone: encryptPhone,
       gender,
       age,
-      profileImage: req.files.attachments[0].path,
+      profileImage: req.files.attachment[0].path,
       attachments: file_path,
     },
   });
