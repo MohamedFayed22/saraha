@@ -54,11 +54,11 @@ export const signUp = async (req, res, next) => {
     salt_rounds: salt_rounds_config,
   });
 
-  const file_path = [];
+  const file_paths = [];
 
   if (req.files) {
     for (const file of req.files.attachments) {
-      file_path.push(file.path);
+      file_paths.push(file.path);
     }
   }
 
@@ -73,7 +73,7 @@ export const signUp = async (req, res, next) => {
       gender,
       age,
       profileImage: req.files.attachment[0].path,
-      attachments: file_path,
+      attachments: file_paths,
     },
   });
   successResponse({
