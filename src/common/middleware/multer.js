@@ -21,7 +21,25 @@ export const multer_local = ({
   });
 
   function fileFilter(req, file, cb) {
-    if (!custom_types.includes(file.type)) {
+    if (!custom_types.includes(file.mimetype)) {
+      cb(new Error("Invalid file type"));
+    }
+    cb(null, true);
+  }
+
+  return multer({ storage, fileFilter });
+};
+
+export const multer_host = ({ custom_types = [] } = {}) => {
+  const storage = multer.diskStorage({
+    filename: function (req, file, cb) {
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      cb(null, file.fieldname + "_" + file.originalname);
+    },
+  });
+
+  function fileFilter(req, file, cb) {
+    if (!custom_types.includes(file.mimetype)) {
       cb(new Error("Invalid file type"));
     }
     cb(null, true);

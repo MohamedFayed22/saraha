@@ -11,6 +11,7 @@ import {
   secret_key_config,
 } from "../../../config/config.service.js";
 import joi from "joi";
+import cloudinary from "../../common/utils/cloudinary.js";
 
 export const singUpSchema = joi
   .object({
@@ -62,6 +63,11 @@ export const signUp = async (req, res, next) => {
     }
   }
 
+  const { secure_url, public_id } = await cloudinary.uploader.upload(req.files.attachment[0].path, {
+    folder: "sarah_app/users",
+    resource_type: "image", //auto
+  });
+
   const user = await db_service.create({
     model: userModel,
     data: {
@@ -72,8 +78,8 @@ export const signUp = async (req, res, next) => {
       phone: encryptPhone,
       gender,
       age,
-      profileImage: req.files.attachment[0].path,
-      attachments: file_paths,
+      profileImage: { secure_url, public_id },
+      coverPhoto: file_paths,
     },
   });
   successResponse({
