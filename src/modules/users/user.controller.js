@@ -41,5 +41,7 @@ userRouter.get(
   authorization([roleEnum.user]),
   US.getProfile,
 );
+userRouter.get("/refresh-token", US.refreshToken);
+userRouter.get("/share-profile/:id", US.shareProfile);
 
 export default userRouter;
