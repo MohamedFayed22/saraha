@@ -48,3 +48,27 @@ export const signinValidation = {
     password: general_rules.password.required(),
   }),
 };
+
+export const shareProfileValidation = {
+  params: Joi.object({
+    id: general_rules.id.required(),
+  }).required(),
+};
+
+export const updateProfileValidation = {
+  body: Joi.object({
+    gender: Joi.string().valid(...Object.values(genderEnum)),
+    phone: Joi.string(),
+    firstName: Joi.string(),
+    lastName: Joi.string(),
+  }),
+};
+
+export const updatePasswordValidation = {
+  body: Joi.object({
+    newPassword: general_rules.password.required(),
+    cPassword: Joi.string().valid(Joi.ref("newPassword")),
+    oldPassword: general_rules.password.required(),
+  }),
+};
+

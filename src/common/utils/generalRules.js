@@ -1,6 +1,11 @@
 import Joi from "joi";
+import { Types } from "mongoose";
 
 export const general_rules = {
+  id: Joi.string().custom((value, helpers) => {
+    const isValid = Types.ObjectId.isValid(value);
+    return isValid ? value : helpers.message("inValid id");
+  }),
   email: Joi.string().email({
     tlds: { allow: true },
     minDomainSegments: 2,

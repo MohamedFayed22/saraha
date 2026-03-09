@@ -1,14 +1,12 @@
 import userModel from "../../DB/models/user.model.js";
-import { providerEnum } from "../../common/enum/user.enum.js";
+import UserModel from "../../DB/models/user.model.js";
+import {providerEnum} from "../../common/enum/user.enum.js";
 import * as db_service from "../../DB/db.service.js";
-import { successResponse } from "../../common/utils/response.success.js";
-import { encrypt } from "../../common/utils/security/encrypt.securty.js";
-import { v4 as uuidv4 } from "uuid";
-import {
-  generateToken,
-  verifyToken,
-} from "../../common/utils/token.service.js";
-import { Compare, Hash } from "../../common/utils/security/hash.security.js";
+import {successResponse} from "../../common/utils/response.success.js";
+import {encrypt} from "../../common/utils/security/encrypt.securty.js";
+import {v4 as uuidv4} from "uuid";
+import {generateToken, verifyToken,} from "../../common/utils/token.service.js";
+import {Compare, Hash} from "../../common/utils/security/hash.security.js";
 import {
   prefix_auth_key_config,
   refresh_key_config,
@@ -17,7 +15,6 @@ import {
 } from "../../../config/config.service.js";
 import joi from "joi";
 import cloudinary from "../../common/utils/cloudinary.js";
-import UserModel from "../../DB/models/user.model.js";
 import {decrypt} from "dotenv";
 
 export const singUpSchema = joi
@@ -197,19 +194,17 @@ export const refreshToken = async (req, res, next) => {
   });
 };
 
-
 export const shareProfile = async (req, res, next) => {
-
-  const {id} = req.params;
+  const { id } = req.params;
 
   const user = await db_service.findOne({
-    model:UserModel,
+    model: UserModel,
     id,
-    select:"-password"
-  })
+    select: "-password",
+  });
 
-  if (!user){
-    throw new Error("user not exist yet")
+  if (!user) {
+    throw new Error("user not exist yet");
   }
 
   user.phone = decrypt(user.phone);
@@ -221,3 +216,57 @@ export const shareProfile = async (req, res, next) => {
     data: user,
   });
 };
+
+export const updateProfile = async (req, res, next) => {
+  let { firstName, lastName, gender, phone } = req.body;
+
+  if (phone) {
+    phone = encrypt(phone);
+  }
+
+  const user = await db_service.findOneAndUpdate({
+    model: UserModel,
+    filter: { _id: req.user._id },
+    update: {
+      firstName,
+      lastName,
+      gender,
+      phone,
+    },
+  });
+
+  if (!user) {
+    throw new Error("user not exist yet");
+  }
+
+  successResponse({
+    res,
+    status: 200,
+    message: "User profile shared successfully",
+    data: user,
+  });
+};
+
+
+export const updatePassword = async (req, res, next) => {
+  let { oldPassword, newPassword } = req.body;
+
+  if (!Compare({ plainText: oldPassword, cipher_text: req.user.password })) {
+    throw new Error("Invalid old password");
+  }
+
+  req.user.password = Hash({
+    plainText: newPassword,
+    salt_rounds: salt_rounds_config,
+  });
+
+  await req.user.save();
+
+  successResponse({
+    res,
+    status: 200,
+    message: "User profile shared successfully",
+    data: user,
+  });
+};
+
