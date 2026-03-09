@@ -6,6 +6,7 @@ import { roleEnum } from "../../common/enum/user.enum.js";
 import { validate } from "../../common/middleware/validation.js";
 import {multer_host, multer_local} from "../../common/middleware/multer.js";
 import { multerEnum } from "../../common/enum/multer.enum.js";
+import {signinValidation, signupValidation} from "./user.validation.js";
 const userRouter = Router();
 
 userRouter.post(
@@ -16,7 +17,7 @@ userRouter.post(
     { name: "attachment", maxCount: 1 },
     { name: "attachments", maxCount: 5 },
   ]),
-  validate,
+  validate(signupValidation),
   US.signUp,
 );
 
@@ -33,7 +34,7 @@ userRouter.post(
 //     US.signUp,
 // );
 
-userRouter.post("/signin", US.signIn);
+userRouter.post("/signin", validate(signinValidation), US.signIn);
 userRouter.get(
   "/profile/:id",
   authentication,
