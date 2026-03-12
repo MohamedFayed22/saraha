@@ -1,12 +1,15 @@
 import userModel from "../../DB/models/user.model.js";
 import UserModel from "../../DB/models/user.model.js";
-import {providerEnum} from "../../common/enum/user.enum.js";
+import { providerEnum } from "../../common/enum/user.enum.js";
 import * as db_service from "../../DB/db.service.js";
-import {successResponse} from "../../common/utils/response.success.js";
-import {encrypt} from "../../common/utils/security/encrypt.securty.js";
-import {v4 as uuidv4} from "uuid";
-import {generateToken, verifyToken,} from "../../common/utils/token.service.js";
-import {Compare, Hash} from "../../common/utils/security/hash.security.js";
+import { successResponse } from "../../common/utils/response.success.js";
+import { encrypt } from "../../common/utils/security/encrypt.securty.js";
+import { v4 as uuidv4 } from "uuid";
+import {
+  generateToken,
+  verifyToken,
+} from "../../common/utils/token.service.js";
+import { Compare, Hash } from "../../common/utils/security/hash.security.js";
 import {
   prefix_auth_key_config,
   refresh_key_config,
@@ -15,7 +18,7 @@ import {
 } from "../../../config/config.service.js";
 import joi from "joi";
 import cloudinary from "../../common/utils/cloudinary.js";
-import {decrypt} from "dotenv";
+import { decrypt } from "dotenv";
 
 export const singUpSchema = joi
   .object({
@@ -247,7 +250,6 @@ export const updateProfile = async (req, res, next) => {
   });
 };
 
-
 export const updatePassword = async (req, res, next) => {
   let { oldPassword, newPassword } = req.body;
 
@@ -270,3 +272,14 @@ export const updatePassword = async (req, res, next) => {
   });
 };
 
+export const logout = async (req, res, next) => {
+  req.user.changeCredentials = Date.now();
+
+  await req.user.save();
+
+  successResponse({
+    res,
+    status: 200,
+    message: "User logout successfully",
+  });
+};

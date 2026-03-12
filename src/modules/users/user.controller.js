@@ -7,7 +7,6 @@ import { validate } from "../../common/middleware/validation.js";
 import { multer_host, multer_local } from "../../common/middleware/multer.js";
 import { multerEnum } from "../../common/enum/multer.enum.js";
 import * as VU from "./user.validation.js";
-import { updateProfileValidation } from "./user.validation.js";
 const userRouter = Router();
 
 userRouter.post(
@@ -56,9 +55,12 @@ userRouter.patch(
 );
 
 userRouter.patch(
-    "update-password",
-    authentication,
-    validate(VU.updatePasswordValidation),
-    US.updatePassword,
+  "update-password",
+  authentication,
+  validate(VU.updatePasswordValidation),
+  US.updatePassword,
 );
+
+userRouter.post("logout", authentication, US.logout);
+
 export default userRouter;

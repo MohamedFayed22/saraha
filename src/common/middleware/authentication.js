@@ -1,7 +1,10 @@
 import { verifyToken } from "../utils/token.service.js";
 import userModel from "../../DB/models/user.model.js";
 import * as db_service from "../../DB/db.service.js";
-import {prefix_auth_key_config, secret_key_config} from "../../../config/config.service.js";
+import {
+  prefix_auth_key_config,
+  secret_key_config,
+} from "../../../config/config.service.js";
 
 export const authentication = async (req, res, next) => {
   const { authorization } = req.headers;
@@ -22,7 +25,7 @@ export const authentication = async (req, res, next) => {
   });
 
   if (!decoded || !decoded.id) {
-    throw new Error("invalid token");
+    throw new Error("invalid token payload");
   }
 
   req.decoded = decoded;
@@ -34,6 +37,10 @@ export const authentication = async (req, res, next) => {
 
   if (!user) {
     throw new Error("User already exist", { cause: 400 });
+  }
+
+  if (user.changeCredentials.getTime() > decoded.iat * 1000) {
+    throw new Error("inValid token");
   }
 
   req.user = user;
