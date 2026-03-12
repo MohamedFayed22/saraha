@@ -19,6 +19,9 @@ import {
 import joi from "joi";
 import cloudinary from "../../common/utils/cloudinary.js";
 import { decrypt } from "dotenv";
+import { randomUUID } from "crypto";
+import revokeTokenModel from "../../DB/models/revokeToken.model.js";
+import { deleteMany } from "../../DB/db.service.js";
 
 export const singUpSchema = joi
   .object({
@@ -116,16 +119,21 @@ export const signIn = async (req, res, next) => {
     throw new Error("Invalid credentials", { cause: 401 });
   }
 
+  const jwtId = randomUUID();
+
   const access_token = generateToken({
     payload: { id: user._id, email: user.email },
     secret_key: secret_key_config,
-    options: { jwtid: uuidv4(), expiresIn: 60 * 5 },
+    options: { jwtid: jwtId, expiresIn: 60 * 5 },
   });
 
   const refresh_token = generateToken({
     payload: { id: user._id, email: user.email },
     secret_key: refresh_key_config,
-    options: { jwtid: uuidv4(), expiresIn: "3m" },
+    options: {
+      jwtid: jwtId,
+      expiresIn: "3m",
+    },
   });
 
   successResponse({
@@ -169,8 +177,18 @@ export const refreshToken = async (req, res, next) => {
   if (!decoded || !decoded.id) {
     throw new Error("invalid token");
   }
-
   req.decoded = decoded;
+
+  const revokeToken = await db_service.findOne({
+    model: revokeTokenModel,
+    filter: {
+      tokenId: decoded.jti,
+    },
+  });
+
+  if (revokeToken) {
+    throw new Error("inValid token revoked");
+  }
 
   const user = await db_service.findOne({
     model: userModel,
@@ -184,7 +202,10 @@ export const refreshToken = async (req, res, next) => {
   const access_token = generateToken({
     payload: { id: user._id, email: user.email },
     secret_key: secret_key_config,
-    options: { jwtid: uuidv4(), expiresIn: 60 * 5 },
+    options: {
+      jwtid: uuidv4(),
+      expiresIn: 60 * 5,
+    },
   });
 
   successResponse({
@@ -273,9 +294,28 @@ export const updatePassword = async (req, res, next) => {
 };
 
 export const logout = async (req, res, next) => {
-  req.user.changeCredentials = Date.now();
+  const flag = req.query;
+  if (flag === "all") {
+    req.user.changeCredentials = Date.now();
 
-  await req.user.save();
+    await req.user.save();
+
+    await db_service.deleteMany({
+      model: revokeTokenModel,
+      filter: {
+        userId: req.user._id,
+      },
+    });
+  }
+
+  await db_service.create({
+    model: revokeTokenModel,
+    data: {
+      tokenId: req.decoded.jti,
+      userId: req.user.id,
+      expiredAt: new Date(req.decoded.exp * 1000),
+    },
+  });
 
   successResponse({
     res,

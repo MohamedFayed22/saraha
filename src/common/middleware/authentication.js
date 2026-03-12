@@ -5,6 +5,7 @@ import {
   prefix_auth_key_config,
   secret_key_config,
 } from "../../../config/config.service.js";
+import revokeTokenModel from "../../DB/models/revokeToken.model.js";
 
 export const authentication = async (req, res, next) => {
   const { authorization } = req.headers;
@@ -39,11 +40,23 @@ export const authentication = async (req, res, next) => {
     throw new Error("User already exist", { cause: 400 });
   }
 
-  if (user.changeCredentials.getTime() > decoded.iat * 1000) {
+  if (user?.changeCredentials.getTime() > decoded.iat * 1000) {
     throw new Error("inValid token");
   }
 
+  const revokeToken = await db_service.findOne({
+    model: revokeTokenModel,
+    filter: {
+      tokenId: decoded.jti
+    }
+  })
+
+  if (revokeToken) {
+    throw new Error("inValid token revoked");
+  }
+
   req.user = user;
+  req.decoded =  decoded;
 
   next();
 };
