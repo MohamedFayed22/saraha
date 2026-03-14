@@ -21,7 +21,6 @@ import cloudinary from "../../common/utils/cloudinary.js";
 import { decrypt } from "dotenv";
 import { randomUUID } from "crypto";
 import revokeTokenModel from "../../DB/models/revokeToken.model.js";
-import { deleteMany } from "../../DB/db.service.js";
 
 export const singUpSchema = joi
   .object({

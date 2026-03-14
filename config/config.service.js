@@ -16,3 +16,4 @@ export const db_uri_config = process.env.DB_URI;
 export const secret_key_config = process.env.SECRET_KEY;
 export const refresh_key_config = process.env.REFRESH_KEY;
 export const prefix_auth_key_config = process.env.PREFIX_AUTH_KEY;
+export const redis_uri_config = process.env.REDIS_URI;
