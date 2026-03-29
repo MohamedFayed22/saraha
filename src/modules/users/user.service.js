@@ -1,6 +1,9 @@
 import userModel from "../../DB/models/user.model.js";
 import UserModel from "../../DB/models/user.model.js";
-import { providerEnum } from "../../common/enum/user.enum.js";
+import {
+  providerEnum as ProviderEnum,
+  providerEnum,
+} from "../../common/enum/user.enum.js";
 import * as db_service from "../../DB/db.service.js";
 import { successResponse } from "../../common/utils/response.success.js";
 import { encrypt } from "../../common/utils/security/encrypt.securty.js";
@@ -22,8 +25,10 @@ import { decrypt } from "dotenv";
 import { randomUUID } from "crypto";
 import {
   deleteKey,
+  get,
   get_key,
   keys,
+  otp_key,
   revoke_key,
   setValue,
 } from "../../DB/redis/redis.service.js";
@@ -114,16 +119,88 @@ export const signUp = async (req, res, next) => {
   });
 
   await setValue({
-    key : `otp::${email}`,
-    value: Hash({ plainText: `${otp}`}),
+    key: otp_key({ email }),
+    value: Hash({ plainText: `${otp}` }),
     ttl: 2 * 60,
-  })
+  });
 
   successResponse({
     res,
     status: 201,
     message: "User created successfully",
     data: user,
+  });
+};
+
+export const confirmEmail = async (req, res, next) => {
+  const { code, email } = req.query;
+
+  const otpValue = await get(otp_key({ email }));
+  if (!otpValue) {
+    throw new Error("otp expired");
+  }
+
+  if (!Compare({ plainText: code, cipher_text: otpValue })) {
+    throw new Error("Invalid otp");
+  }
+
+  const user = await db_service.findOneAndUpdate({
+    model: userModel,
+    filter: {
+      email,
+      confirmed: { $exists: false },
+      provider: ProviderEnum.system,
+    },
+    update: { confirmed: true },
+  });
+
+  if (!user) {
+    throw new Error("user not exist yet");
+  }
+  await deleteKey(otp_key({ email }));
+
+  successResponse({
+    res,
+    status: 200,
+    message: "User email confirmed successfully",
+  });
+};
+
+export const resendOtp = async (req, res, next) => {
+  const {  email } = req.query;
+
+  const user = await db_service.findOne({
+    model: userModel,
+    filter: {
+      email,
+      confirmed: { $exists: false },
+      provider: ProviderEnum.system,
+    }
+  });
+
+  if (!user) {
+    throw new Error("user not exist yet");
+  }
+
+  const otp = await generateOtp();
+  await sendEmail({
+    to: email,
+    subject: "Welcome to Sarah App",
+    html: `<h1>Hello ${user.userName}</h1>
+    <p>Thank you for joining us. We are excited to have you on board. your otp is ${otp}</p>
+    `,
+  });
+
+  await setValue({
+    key: otp_key({ email }),
+    value: Hash({ plainText: `${otp}` }),
+    ttl: 2 * 60,
+  });
+
+  successResponse({
+    res,
+    status: 200,
+    message: "User email confirmed successfully",
   });
 };
 
@@ -135,6 +212,7 @@ export const signIn = async (req, res, next) => {
     filter: {
       email,
       provider: providerEnum.system,
+      confirmed : { $exists: true}
     },
     select: "-password",
   });

@@ -62,4 +62,10 @@ userRouter.patch(
 
 userRouter.post("logout", authentication, US.logout);
 
+userRouter.patch(
+  "/confirm-email",
+  validate(VU.confirmEmailValidation),
+  US.confirmEmail,
+);
+
 export default userRouter;

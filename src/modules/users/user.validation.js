@@ -68,3 +68,10 @@ export const updatePasswordValidation = {
     oldPassword: general_rules.password.required(),
   }),
 };
+
+export const confirmEmailValidation = {
+  body: Joi.object({
+    code: Joi.string().required().length(6),
+    email: general_rules.email.required(),
+  }),
+};

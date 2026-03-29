@@ -21,6 +21,10 @@ export const get_key = ({ userId }) => {
   return `revoke_token::${userId}`;
 };
 
+export const otp_key = ({ email }) => {
+  return `otp::${email}`;
+};
+
 export const update = async ({ key, value, ttl }) => {
   try {
     if (!(await exists(key))) return;
