@@ -294,7 +294,6 @@ export const updatePassword = async (req, res, next) => {
     res,
     status: 200,
     message: "User profile shared successfully",
-    data: user,
   });
 };
 
