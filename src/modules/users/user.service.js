@@ -21,6 +21,12 @@ import cloudinary from "../../common/utils/cloudinary.js";
 import { decrypt } from "dotenv";
 import { randomUUID } from "crypto";
 import revokeTokenModel from "../../DB/models/revokeToken.model.js";
+import {
+  deleteKey, get_key,
+  keys,
+  revoke_key,
+  setValue,
+} from "../../DB/redis/redis.service.js";
 
 export const singUpSchema = joi
   .object({
@@ -299,21 +305,13 @@ export const logout = async (req, res, next) => {
 
     await req.user.save();
 
-    await db_service.deleteMany({
-      model: revokeTokenModel,
-      filter: {
-        userId: req.user._id,
-      },
-    });
+    await deleteKey(await keys(get_key(req.user._id)));
   }
 
-  await db_service.create({
-    model: revokeTokenModel,
-    data: {
-      tokenId: req.decoded.jti,
-      userId: req.user.id,
-      expiredAt: new Date(req.decoded.exp * 1000),
-    },
+  await setValue({
+    key: revoke_key(req.user._id, req.decoded.jti),
+    value: `${req.decoded.jti}`,
+    ttl: req.decoded.exp - Math.floor(Date.now() / 1000),
   });
 
   successResponse({

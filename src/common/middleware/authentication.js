@@ -6,6 +6,7 @@ import {
   secret_key_config,
 } from "../../../config/config.service.js";
 import revokeTokenModel from "../../DB/models/revokeToken.model.js";
+import { get, revoke_key } from "../../DB/redis/redis.service.js";
 
 export const authentication = async (req, res, next) => {
   const { authorization } = req.headers;
@@ -44,19 +45,14 @@ export const authentication = async (req, res, next) => {
     throw new Error("inValid token");
   }
 
-  const revokeToken = await db_service.findOne({
-    model: revokeTokenModel,
-    filter: {
-      tokenId: decoded.jti
-    }
-  })
+  const revokeToken = await get(revoke_key(req.user._id, req.decoded.jti));
 
   if (revokeToken) {
     throw new Error("inValid token revoked");
   }
 
   req.user = user;
-  req.decoded =  decoded;
+  req.decoded = decoded;
 
   next();
 };
