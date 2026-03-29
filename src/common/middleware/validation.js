@@ -1,9 +1,15 @@
-import { singUpSchema } from "../../modules/users/user.service.js";
-
-export const validate = (req, res, next) => {
-  const error = singUpSchema.validate(req.body, { abortEarly: false });
-  if (error) {
-    return res.status(401).json({ message: "validate error", error: error });
-  }
-  next();
+export const validate = (schema) => {
+  return (req, res, next) => {
+    const errors = [];
+    for (const key of Object.keys(schema)) {
+      const result = schema[key].validate(req[key], { abortEarly: false });
+      if (result.error) {
+        errors.push(...result.error.details);
+      }
+    }
+    if (errors.length) {
+      return res.status(400).json({ message: "validation error", errors });
+    }
+    next();
+  };
 };

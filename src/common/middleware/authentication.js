@@ -5,7 +5,6 @@ import {
   prefix_auth_key_config,
   secret_key_config,
 } from "../../../config/config.service.js";
-import revokeTokenModel from "../../DB/models/revokeToken.model.js";
 import { get, revoke_key } from "../../DB/redis/redis.service.js";
 
 export const authentication = async (req, res, next) => {

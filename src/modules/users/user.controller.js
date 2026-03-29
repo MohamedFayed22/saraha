@@ -17,7 +17,6 @@ userRouter.post(
     { name: "attachment", maxCount: 1 },
     { name: "attachments", maxCount: 5 },
   ]),
-  validate(VU.signupValidation),
   US.signUp,
 );
 

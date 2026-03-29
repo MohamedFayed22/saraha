@@ -15,7 +15,7 @@ export const signupValidation = {
     phone: Joi.string().required(),
   }),
 
-  file: general_rules.file.required(),
+  //file: general_rules.file.required(),
 
   // files: Joi.array().items(
   //   Joi.object({
@@ -33,13 +33,10 @@ export const signupValidation = {
   // ),
 
   files: Joi.object({
-    attachment: Joi.array()
-      .max(1)
-      .items(general_rules.file.required())
-      .required(),
+    attachment: Joi.array().max(1).items(general_rules.file.required()),
 
-    attachments: Joi.array().items(general_rules.file.required).required(),
-  }).required(),
+    attachments: Joi.array().items(general_rules.file.required),
+  }),
 };
 
 export const signinValidation = {
@@ -71,4 +68,3 @@ export const updatePasswordValidation = {
     oldPassword: general_rules.password.required(),
   }),
 };
-

@@ -20,13 +20,14 @@ import joi from "joi";
 import cloudinary from "../../common/utils/cloudinary.js";
 import { decrypt } from "dotenv";
 import { randomUUID } from "crypto";
-import revokeTokenModel from "../../DB/models/revokeToken.model.js";
 import {
-  deleteKey, get_key,
+  deleteKey,
+  get_key,
   keys,
   revoke_key,
   setValue,
 } from "../../DB/redis/redis.service.js";
+import { generateOtp, sendEmail } from "../../common/utils/email/send.email.js";
 
 export const singUpSchema = joi
   .object({
@@ -40,12 +41,12 @@ export const signUp = async (req, res, next) => {
   const { userName, lastName, email, password, cpassword, gender, age, phone } =
     req.body;
 
-  const { error } = singUpSchema.validate(req.body, {
-    abortEarly: false,
-  });
-  if (error) {
-    return res.status(401).json({ message: "validate error", error: error });
-  }
+  // const { error } = singUpSchema.validate(req.body, {
+  //   abortEarly: false,
+  // });
+  // if (error) {
+  //   return res.status(401).json({ message: "validate error", error: error });
+  // }
 
   if (userName.split(" ").length < 2) {
     throw new Error("Invalid name", { cause: 400 });
@@ -70,21 +71,25 @@ export const signUp = async (req, res, next) => {
     salt_rounds: salt_rounds_config,
   });
 
-  const file_paths = [];
-
-  if (req.files) {
-    for (const file of req.files.attachments) {
-      file_paths.push(file.path);
-    }
-  }
-
-  const { secure_url, public_id } = await cloudinary.uploader.upload(
-    req.files.attachment[0].path,
-    {
-      folder: "sarah_app/users",
-      resource_type: "image", //auto
-    },
-  );
+  // const file_paths = [];
+  //
+  // if (req.files?.attachments) {
+  //   for (const file of req.files.attachments) {
+  //     file_paths.push(file.path);
+  //   }
+  // }
+  //
+  // let profileImage = {};
+  // if (req.files?.attachment?.[0]) {
+  //   const { secure_url, public_id } = await cloudinary.uploader.upload(
+  //     req.files.attachment[0].path,
+  //     {
+  //       folder: "sarah_app/users",
+  //       resource_type: "image",
+  //     },
+  //   );
+  //   profileImage = { secure_url, public_id };
+  // }
 
   const user = await db_service.create({
     model: userModel,
@@ -96,10 +101,24 @@ export const signUp = async (req, res, next) => {
       phone: encryptPhone,
       gender,
       age,
-      profileImage: { secure_url, public_id },
-      coverPhoto: file_paths,
     },
   });
+
+  const otp = await generateOtp();
+  await sendEmail({
+    to: email,
+    subject: "Welcome to Sarah App",
+    html: `<h1>Hello ${userName}</h1>
+    <p>Thank you for joining us. We are excited to have you on board. your otp is ${otp}</p>
+    `,
+  });
+
+  await setValue({
+    key : `otp::${email}`,
+    value: Hash({ plainText: `${otp}`}),
+    ttl: 2 * 60,
+  })
+
   successResponse({
     res,
     status: 201,
@@ -120,7 +139,7 @@ export const signIn = async (req, res, next) => {
     select: "-password",
   });
 
-  if (!user || !Compare(password, user.password)) {
+  if (!user || !Compare({ plainText: password, cipher_text: user.password })) {
     throw new Error("Invalid credentials", { cause: 401 });
   }
 
